@@ -5,7 +5,7 @@ import Button from '../components/Button'
 import Input from '../components/Input'
 import Select from '../components/Select'
 import { useAuth } from '../hooks/useAuth'
-import { UserPlus, X, ShieldCheck, ShieldOff, RotateCcw, Users } from 'lucide-react'
+import { UserPlus, X, ShieldCheck, ShieldOff, RotateCcw, Users, Trash2, AlertTriangle } from 'lucide-react'
 
 const ROLE_OPTIONS = [
   { value: 'operations', label: 'Operations User' },
@@ -35,10 +35,29 @@ export default function UserManagement() {
   const [createError, setCreateError] = useState('')
   const [actionBusy, setActionBusy] = useState({})
   const [toast, setToast] = useState(null)
+  const [deleteConfirm, setDeleteConfirm] = useState(null) // { id, email, full_name }
 
   function showToast(message, type = 'success') {
     setToast({ message, type })
-    setTimeout(() => setToast(null), 3500)
+    setTimeout(() => setToast(null), 4500)
+  }
+
+  // ── Delete user ────────────────────────────────────────────
+  async function confirmDelete() {
+    if (!deleteConfirm) return
+    const { id, email } = deleteConfirm
+
+    setActionBusy((b) => ({ ...b, [id + '_delete']: true }))
+    const { error } = await supabase.rpc('admin_delete_user', { p_user_id: id })
+
+    if (error) {
+      showToast(error.message, 'error')
+    } else {
+      setUsers((us) => us.filter((u) => u.id !== id))
+      showToast(`User ${email} deleted permanently`)
+    }
+    setActionBusy((b) => ({ ...b, [id + '_delete']: false }))
+    setDeleteConfirm(null)
   }
 
   const fetchUsers = useCallback(async () => {
@@ -280,6 +299,16 @@ export default function UserManagement() {
                             >
                               <RotateCcw size={15} />
                             </button>
+
+                            {/* Delete user (permanent) */}
+                            <button
+                              onClick={() => setDeleteConfirm({ id: u.id, email: u.email, full_name: u.full_name })}
+                              disabled={isSelf || !!actionBusy[u.id + '_delete']}
+                              title={isSelf ? "You cannot delete your own account" : "Delete user permanently"}
+                              className="p-1.5 rounded-md text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              <Trash2 size={15} />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -291,6 +320,52 @@ export default function UserManagement() {
           </div>
         </div>
       </div>
+
+      {/* ── Delete Confirmation Modal ─────────────────────────── */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="px-6 py-5">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center shrink-0">
+                  <AlertTriangle size={20} className="text-red-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900">Delete User Permanently?</h3>
+                  <p className="text-sm text-gray-500 mt-2">
+                    You are about to permanently delete{' '}
+                    <span className="font-semibold text-gray-800">
+                      {deleteConfirm.full_name || deleteConfirm.email}
+                    </span>
+                    . This action <strong>cannot be undone</strong>.
+                  </p>
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3 text-xs text-red-700">
+                    <strong>Note:</strong> Their generated reference numbers in the audit log will remain (with their email preserved), but they will no longer be able to log in.
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3 px-6 py-4 bg-gray-50 rounded-b-2xl border-t border-gray-100">
+              <Button
+                onClick={confirmDelete}
+                loading={!!actionBusy[deleteConfirm.id + '_delete']}
+                variant="danger"
+                className="flex-1"
+              >
+                <Trash2 size={14} />
+                Delete Permanently
+              </Button>
+              <Button
+                onClick={() => setDeleteConfirm(null)}
+                variant="secondary"
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Add User Modal ─────────────────────────────────────── */}
       {showModal && (
