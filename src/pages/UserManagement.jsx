@@ -55,7 +55,7 @@ export default function UserManagement() {
     fetchUsers()
   }, [fetchUsers])
 
-  // ── Create User via RPC (no Edge Function needed) ──────────
+  // ── Create User via RPC + send welcome email ───────────────
   async function handleCreateUser() {
     setCreateError('')
 
@@ -65,7 +65,8 @@ export default function UserManagement() {
 
     setCreateLoading(true)
     try {
-      const { data, error } = await supabase.rpc('admin_create_user', {
+      // 1. Create the user
+      const { error } = await supabase.rpc('admin_create_user', {
         p_email:     newUser.email.trim(),
         p_password:  newUser.password,
         p_full_name: newUser.full_name.trim() || null,
@@ -74,7 +75,36 @@ export default function UserManagement() {
 
       if (error) throw new Error(error.message)
 
-      showToast(`User ${newUser.email} created successfully`)
+      // 2. Send welcome email via Edge Function
+      let emailStatus = ''
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-welcome-email`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+              email:     newUser.email.trim(),
+              full_name: newUser.full_name.trim() || null,
+              password:  newUser.password,
+              role:      newUser.role,
+              login_url: `${window.location.origin}/login`,
+            }),
+          }
+        )
+        const payload = await res.json()
+        if (!res.ok) emailStatus = ` (email failed: ${payload.error || 'unknown error'})`
+      } catch (emailErr) {
+        emailStatus = ` (email failed: ${emailErr.message})`
+      }
+
+      showToast(`User ${newUser.email} created${emailStatus || ' and welcome email sent'}`,
+                emailStatus ? 'error' : 'success')
+
       setShowModal(false)
       setNewUser({ ...defaultNew })
       fetchUsers()
