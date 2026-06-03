@@ -21,7 +21,7 @@ export default function Layout({ children }) {
         {/* Top header */}
         <header className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center shrink-0">
           <h1 className="text-base font-semibold text-gray-800">
-            SCS Operations — Serial Number Generator
+            SCS Operations - Serial Number Generator For FITS
           </h1>
 
           <div className="flex items-center gap-4">
