@@ -40,7 +40,7 @@ export default function Layout({ children }) {
               title="Log out"
             >
               <LogOut size={16} />
-              <span>Logout</span>
+              <span>Logout Now</span>
             </button>
           </div>
         </header>
