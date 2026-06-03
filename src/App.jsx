@@ -10,7 +10,7 @@ import UserManagement from './pages/UserManagement'
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/scsoperations">
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />

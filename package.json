@@ -1,5 +1,6 @@
 {
   "name": "scs-serial-number-generator",
+  "homepage": "https://fitsexpress.com/scsoperations",
   "private": true,
   "version": "1.0.0",
   "type": "module",
