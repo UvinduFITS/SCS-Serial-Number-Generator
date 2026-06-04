@@ -111,7 +111,7 @@ export default function UserManagement() {
               full_name: newUser.full_name.trim() || null,
               password:  newUser.password,
               role:      newUser.role,
-              login_url: `${window.location.origin}/login`,
+              login_url: 'https://fitsexpress.com/scsoperations',
             }),
           }
         )
