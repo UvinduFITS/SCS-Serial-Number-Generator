@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:   # allow manual runs from GitHub Actions tab
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -28,6 +28,27 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      # ─── DEBUG: Verify secrets are set and the hostname resolves ───
+      - name: Debug FTP secrets
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          echo "── Secret length check (values are masked) ──"
+          echo "FTP_SERVER   length: ${#FTP_SERVER}"
+          echo "FTP_USERNAME length: ${#FTP_USERNAME}"
+          echo "FTP_PASSWORD length: ${#FTP_PASSWORD}"
+          echo ""
+          echo "── Character codes of FTP_SERVER (detects hidden chars) ──"
+          echo -n "$FTP_SERVER" | od -c | head -3
+          echo ""
+          echo "── DNS resolution test ──"
+          nslookup "$FTP_SERVER" || echo "DNS LOOKUP FAILED — hostname value is invalid"
+          echo ""
+          echo "── TCP connection test on port 21 ──"
+          timeout 10 bash -c "cat < /dev/tcp/$FTP_SERVER/21" && echo "TCP connect OK" || echo "TCP connect FAILED"
 
       - name: Deploy to Namecheap via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
