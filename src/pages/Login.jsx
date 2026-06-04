@@ -56,8 +56,8 @@ export default function Login() {
             <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-white text-lg mx-auto mb-4 shadow-md">
               SCS
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">SCS Operations</h1>
-            <p className="text-gray-500 text-sm mt-1">Serial Number Generator System For FITS</p>
+            <h1 className="text-2xl font-bold text-gray-900">SCS Operations 2026</h1>
+            <p className="text-gray-500 text-sm mt-1">Serial Number Generator System</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
